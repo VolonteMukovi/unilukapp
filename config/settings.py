@@ -32,6 +32,9 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
 _hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 ALLOWED_HOSTS = [h.strip() for h in _hosts.split(",") if h.strip()]
 
+# Région par défaut pour numéros sans indicatif (ISO 3166-1 alpha-2), ex. CD = RDC.
+PHONE_DEFAULT_REGION = os.environ.get("PHONE_DEFAULT_REGION", "CD").strip() or "CD"
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

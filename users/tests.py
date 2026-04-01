@@ -29,3 +29,13 @@ class LoginApiTests(TestCase):
         self.assertIn("user", r.data)
         self.assertEqual(r.data["user"]["email"], "admin@test.local")
         self.assertEqual(r.data["user"]["role"], UserRole.ADMIN)
+
+    def test_login_with_phone_number_in_email_field(self):
+        r = self.client.post(
+            "/api/auth/token/",
+            {"email": "+243 900 000 001", "password": "SecurePass12"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("access", r.data)
+        self.assertEqual(r.data["user"]["email"], "admin@test.local")

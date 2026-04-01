@@ -1,4 +1,5 @@
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from inscription.models import Filiere
@@ -63,7 +64,10 @@ class UserWriteSerializer(serializers.ModelSerializer):
         return value.lower().strip()
 
     def validate_num_tel(self, value):
-        return validate_phone(value)
+        try:
+            return validate_phone(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages)) from exc
 
     def validate_matricule(self, value):
         v = (value or "").strip()
@@ -100,9 +104,12 @@ class UserMeUpdateSerializer(serializers.ModelSerializer):
         extra_kwargs = {"num_tel": {"required": False}, "photo_profil": {"required": False}}
 
     def validate_num_tel(self, value):
-        if value:
+        if value in (None, ""):
+            return value
+        try:
             return validate_phone(value)
-        return value
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages)) from exc
 
 
 class FiliereNestedForUserSerializer(serializers.ModelSerializer):

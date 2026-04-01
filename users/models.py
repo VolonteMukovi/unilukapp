@@ -76,5 +76,14 @@ class User(AbstractUser):
         name = " ".join(p for p in parts if p).strip()
         return name
 
+    def save(self, *args, **kwargs):
+        if self.num_tel:
+            from users.phone_utils import parse_phone_to_e164
+
+            normalized = parse_phone_to_e164(self.num_tel)
+            if normalized:
+                self.num_tel = normalized
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.get_full_name() or self.email} ({self.matricule})"

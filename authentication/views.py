@@ -7,7 +7,10 @@ from authentication.serializers import CustomTokenObtainPairSerializer
 @extend_schema_view(
     post=extend_schema(
         tags=["Authentification"],
-        summary="Connexion - jetons JWT + objet utilisateur (profil, filières, institution)",
+        summary=(
+            "Connexion - jetons JWT + profil utilisateur. "
+            "Champ `email` : adresse e-mail **ou** numéro de téléphone (forme libre, validée)."
+        ),
     ),
 )
 class LoginView(TokenObtainPairView):
