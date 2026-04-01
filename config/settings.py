@@ -149,11 +149,27 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-_cors = os.environ.get("CORS_ALLOWED_ORIGINS", "")
-if _cors.strip():
-    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors.split(",") if o.strip()]
-else:
+# CORS : chaque entrée doit être une URL avec schéma (ex. http://localhost:3000).
+# "*" ou "all" seuls dans CORS_ALLOWED_ORIGINS activent CORS_ALLOW_ALL_ORIGINS (django-cors n'accepte pas * dans la liste).
+_cors_raw = os.environ.get("CORS_ALLOWED_ORIGINS", "").strip()
+_cors_force_all = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+
+if _cors_force_all:
+    CORS_ALLOW_ALL_ORIGINS = True
+elif not _cors_raw:
     CORS_ALLOW_ALL_ORIGINS = DEBUG
+else:
+    _cors_parts = [o.strip() for o in _cors_raw.split(",") if o.strip()]
+    _filtered = [p for p in _cors_parts if p.lower() not in ("*", "all")]
+    if not _filtered:
+        CORS_ALLOW_ALL_ORIGINS = True
+    else:
+        CORS_ALLOWED_ORIGINS = _filtered
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "API académique",
