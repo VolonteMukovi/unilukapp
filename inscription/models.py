@@ -4,7 +4,8 @@ from django.utils.translation import gettext_lazy as _
 
 
 class Institution(models.Model):
-    nom = models.CharField(_("nom"), max_length=255, unique=True)
+    # max_length 191 : limite index utf8mb4 sous MySQL/MariaDB (WAMP, etc.) — ~764 octets
+    nom = models.CharField(_("nom"), max_length=191, unique=True)
     code = models.CharField(_("code"), max_length=32, unique=True, blank=True, null=True)
     adresse = models.TextField(_("adresse"), blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -24,7 +25,7 @@ class Domaine(models.Model):
         on_delete=models.CASCADE,
         related_name="domaines",
     )
-    nom = models.CharField(_("nom"), max_length=255)
+    nom = models.CharField(_("nom"), max_length=191)
     code = models.CharField(_("code"), max_length=32, blank=True)
 
     class Meta:
@@ -47,7 +48,7 @@ class Filiere(models.Model):
         on_delete=models.CASCADE,
         related_name="filieres",
     )
-    nom = models.CharField(_("nom"), max_length=255)
+    nom = models.CharField(_("nom"), max_length=191)
     code = models.CharField(_("code"), max_length=32, blank=True)
 
     class Meta:

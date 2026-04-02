@@ -40,7 +40,9 @@ class User(AbstractUser):
     username = None
     objects = UserManager()
 
-    email = models.EmailField(_("adresse e-mail"), unique=True, db_index=True)
+    # 191 car. max : index unique compatible utf8mb4 MySQL/MariaDB (limite ~1000 octets)
+    # unique=True crée déjà un index MySQL — pas de db_index en double
+    email = models.EmailField(_("adresse e-mail"), max_length=191, unique=True)
     matricule = models.CharField(_("matricule"), max_length=64, unique=True, db_index=True)
     num_tel = models.CharField(_("numéro de téléphone"), max_length=32, unique=True, db_index=True)
     role = models.CharField(
@@ -53,6 +55,7 @@ class User(AbstractUser):
     photo_profil = models.ImageField(
         _("photo de profil"),
         upload_to="profils/%Y/%m/",
+        max_length=512,
         blank=True,
         null=True,
     )

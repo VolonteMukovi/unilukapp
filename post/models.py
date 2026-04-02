@@ -89,6 +89,7 @@ class Horaire(models.Model):
     fichier = models.FileField(
         _("fichier horaire (PDF ou image)"),
         upload_to="horaires/%Y/%m/",
+        max_length=512,
         blank=True,
         null=True,
     )

@@ -84,7 +84,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# MySQL / MariaDB (même backend Django). Compatible XAMPP, WAMP, MySQL Server, MariaDB, Workbench (client).
+# MySQL / MariaDB (même backend Django). Index utf8mb4, chemins fichiers 512 car., charset des DB de test : voir .env.example (WAMP / XAMPP).
 _db_engine = os.environ.get("DB_ENGINE", "django.db.backends.mysql").strip()
 _db_options: dict = {"charset": "utf8mb4"}
 # Une seule instruction ; sur anciennes versions MySQL/MariaDB, définir DB_INIT_COMMAND vide pour désactiver.
@@ -95,19 +95,26 @@ _read_default = os.environ.get("DB_READ_DEFAULT_FILE", "").strip()
 if _read_default:
     _db_options["read_default_file"] = _read_default
 
-DATABASES = {
-    "default": {
-        "ENGINE": _db_engine,
-        "NAME": os.environ.get("DB_NAME", "bdd_unilukaapp").strip(),
-        "USER": os.environ.get("DB_USER", "root").strip(),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", "127.0.0.1").strip(),
-        "PORT": os.environ.get("DB_PORT", "3306").strip(),
-        "OPTIONS": _db_options,
-        "CONN_MAX_AGE": _int_env("DB_CONN_MAX_AGE", 0),
-        "CONN_HEALTH_CHECKS": _bool_env("DB_CONN_HEALTH_CHECKS", False),
-    }
+_default_db = {
+    "ENGINE": _db_engine,
+    "NAME": os.environ.get("DB_NAME", "bdd_unilukaapp").strip(),
+    "USER": os.environ.get("DB_USER", "root").strip(),
+    "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+    "HOST": os.environ.get("DB_HOST", "127.0.0.1").strip(),
+    "PORT": os.environ.get("DB_PORT", "3306").strip(),
+    "OPTIONS": _db_options,
+    "CONN_MAX_AGE": _int_env("DB_CONN_MAX_AGE", 0),
+    "CONN_HEALTH_CHECKS": _bool_env("DB_CONN_HEALTH_CHECKS", False),
 }
+
+# Bases de test MySQL/MariaDB : charset explicite (évite mélanges utf8 / utf8mb4 sous WAMP)
+if _db_engine == "django.db.backends.mysql":
+    _default_db["TEST"] = {
+        "CHARSET": "utf8mb4",
+        "COLLATION": "utf8mb4_unicode_ci",
+    }
+
+DATABASES = {"default": _default_db}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

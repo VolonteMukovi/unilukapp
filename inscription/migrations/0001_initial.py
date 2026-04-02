@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
             name='Domaine',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=255, verbose_name='nom')),
+                ('nom', models.CharField(max_length=191, verbose_name='nom')),
                 ('code', models.CharField(blank=True, max_length=32, verbose_name='code')),
             ],
             options={
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
             name='Filiere',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=255, verbose_name='nom')),
+                ('nom', models.CharField(max_length=191, verbose_name='nom')),
                 ('code', models.CharField(blank=True, max_length=32, verbose_name='code')),
             ],
             options={
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
             name='Institution',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=255, unique=True, verbose_name='nom')),
+                ('nom', models.CharField(max_length=191, unique=True, verbose_name='nom')),
                 ('code', models.CharField(blank=True, max_length=32, null=True, unique=True, verbose_name='code')),
                 ('adresse', models.TextField(blank=True, verbose_name='adresse')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),

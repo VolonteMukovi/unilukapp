@@ -21,6 +21,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='horaire',
             name='fichier',
-            field=models.FileField(blank=True, null=True, upload_to='horaires/%Y/%m/', verbose_name='fichier horaire (PDF ou image)'),
+            field=models.FileField(blank=True, max_length=512, null=True, upload_to='horaires/%Y/%m/', verbose_name='fichier horaire (PDF ou image)'),
         ),
     ]

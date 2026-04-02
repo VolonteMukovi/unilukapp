@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 ('is_staff', models.BooleanField(default=False, help_text='Designates whether the user can log into this admin site.', verbose_name='staff status')),
                 ('is_active', models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')),
                 ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
-                ('email', models.EmailField(db_index=True, max_length=254, unique=True, verbose_name='adresse e-mail')),
+                ('email', models.EmailField(max_length=191, unique=True, verbose_name='adresse e-mail')),
                 ('matricule', models.CharField(db_index=True, max_length=64, unique=True, verbose_name='matricule')),
                 ('num_tel', models.CharField(db_index=True, max_length=32, unique=True, verbose_name='numéro de téléphone')),
                 ('role', models.CharField(choices=[('admin', 'Admin (secrétariat principal)'), ('secretaire', 'Secrétaire'), ('etudiant', 'Étudiant')], db_index=True, default='etudiant', max_length=20)),
