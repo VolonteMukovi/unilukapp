@@ -1,6 +1,14 @@
+from drf_spectacular.utils import OpenApiExample
+
 from rest_framework import permissions, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
+from config.openapi_examples import AFFECTATION as AFFECTATION_EXAMPLE
+from config.openapi_examples import DOMAINE as DOMAINE_EXAMPLE
+from config.openapi_examples import FILIERE as FILIERE_EXAMPLE
+from config.openapi_examples import PAGINATED_AFFECTATIONS as PAGINATED_AFFECTATIONS_EXAMPLE
+from config.openapi_examples import PAGINATED_DOMAINES as PAGINATED_DOMAINES_EXAMPLE
+from config.openapi_examples import PAGINATED_FILIERES as PAGINATED_FILIERES_EXAMPLE
 from config.schema import crud_table
 from inscription.filters import (
     AffectFiliereFilter,
@@ -32,7 +40,19 @@ class InstitutionViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated(), IsRoleAdmin()]
 
 
-@crud_table("Domaine")
+@crud_table(
+    "Domaine",
+    list_examples=[
+        OpenApiExample(
+            "Liste paginée (institution + institution_detail)",
+            value=PAGINATED_DOMAINES_EXAMPLE,
+            response_only=True,
+        ),
+    ],
+    retrieve_examples=[
+        OpenApiExample("Détail domaine", value=DOMAINE_EXAMPLE, response_only=True),
+    ],
+)
 class DomaineViewSet(viewsets.ModelViewSet):
     queryset = Domaine.objects.select_related("institution").order_by("institution", "nom")
     serializer_class = DomaineSerializer
@@ -46,7 +66,19 @@ class DomaineViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated(), IsRoleAdmin()]
 
 
-@crud_table("Filière")
+@crud_table(
+    "Filière",
+    list_examples=[
+        OpenApiExample(
+            "Liste paginée (domaine + domaine_detail)",
+            value=PAGINATED_FILIERES_EXAMPLE,
+            response_only=True,
+        ),
+    ],
+    retrieve_examples=[
+        OpenApiExample("Détail filière", value=FILIERE_EXAMPLE, response_only=True),
+    ],
+)
 class FiliereViewSet(viewsets.ModelViewSet):
     queryset = Filiere.objects.select_related("domaine__institution").order_by("domaine", "nom")
     serializer_class = FiliereSerializer
@@ -60,7 +92,23 @@ class FiliereViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated(), IsRoleAdmin()]
 
 
-@crud_table("AffectFiliere")
+@crud_table(
+    "AffectFiliere",
+    list_examples=[
+        OpenApiExample(
+            "Liste paginée (user_detail, filiere_detail)",
+            value=PAGINATED_AFFECTATIONS_EXAMPLE,
+            response_only=True,
+        ),
+    ],
+    retrieve_examples=[
+        OpenApiExample(
+            "Détail affectation",
+            value=AFFECTATION_EXAMPLE,
+            response_only=True,
+        ),
+    ],
+)
 class AffectFiliereViewSet(viewsets.ModelViewSet):
     queryset = (
         AffectFiliere.objects.select_related("user", "filiere__domaine__institution")

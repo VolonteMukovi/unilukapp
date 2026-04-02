@@ -3,7 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from post.validators import validate_horaire_fichier
+from post.validators import validate_horaire_fichier, validate_publication_image
 
 
 class CategoriePost(models.Model):
@@ -32,6 +32,11 @@ class PublicationStatut(models.TextChoices):
     ARCHIVE = "archive", _("Archivé")
 
 
+class PublicationType(models.TextChoices):
+    COMMUNICATION = "communication", _("Communication")
+    ACTUALITE = "actualite", _("Actualité")
+
+
 class Publication(models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -45,11 +50,25 @@ class Publication(models.Model):
     )
     titre = models.CharField(_("titre"), max_length=255)
     contenu = models.TextField(_("contenu"))
+    type_pub = models.CharField(
+        _("type de publication"),
+        max_length=20,
+        choices=PublicationType.choices,
+        default=PublicationType.ACTUALITE,
+        db_index=True,
+    )
     statut = models.CharField(
         max_length=20,
         choices=PublicationStatut.choices,
         default=PublicationStatut.ACTIF,
         db_index=True,
+    )
+    image = models.ImageField(
+        _("image"),
+        upload_to="publications/%Y/%m/",
+        max_length=512,
+        blank=True,
+        null=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -63,6 +82,11 @@ class Publication(models.Model):
 
     def __str__(self):
         return self.titre
+
+    def clean(self):
+        super().clean()
+        if self.image:
+            validate_publication_image(self.image)
 
 
 class HoraireStatut(models.TextChoices):

@@ -27,6 +27,8 @@ class UserManager(BaseUserManager):
             raise ValueError(_("Superuser doit avoir is_staff=True."))
         if extra_fields.get("is_superuser") is not True:
             raise ValueError(_("Superuser doit avoir is_superuser=True."))
+        # createsuperuser et tout appel explicite : rôle applicatif toujours admin
+        extra_fields["role"] = UserRole.ADMIN
         return self._create_user(email, password, **extra_fields)
 
 
@@ -43,7 +45,14 @@ class User(AbstractUser):
     # 191 car. max : index unique compatible utf8mb4 MySQL/MariaDB (limite ~1000 octets)
     # unique=True crée déjà un index MySQL — pas de db_index en double
     email = models.EmailField(_("adresse e-mail"), max_length=191, unique=True)
-    matricule = models.CharField(_("matricule"), max_length=64, unique=True, db_index=True)
+    matricule = models.CharField(
+        _("matricule"),
+        max_length=64,
+        unique=True,
+        db_index=True,
+        blank=True,
+        null=True,
+    )
     num_tel = models.CharField(_("numéro de téléphone"), max_length=32, unique=True, db_index=True)
     role = models.CharField(
         max_length=20,
@@ -67,7 +76,7 @@ class User(AbstractUser):
     )
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["matricule", "num_tel", "first_name", "last_name"]
+    REQUIRED_FIELDS = ["num_tel", "first_name", "last_name"]
 
     class Meta:
         verbose_name = _("utilisateur")
@@ -80,6 +89,8 @@ class User(AbstractUser):
         return name
 
     def save(self, *args, **kwargs):
+        if self.matricule == "":
+            self.matricule = None
         if self.num_tel:
             from users.phone_utils import parse_phone_to_e164
 
@@ -89,4 +100,7 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.get_full_name() or self.email} ({self.matricule})"
+        name = self.get_full_name() or self.email
+        if self.matricule:
+            return f"{name} ({self.matricule})"
+        return name

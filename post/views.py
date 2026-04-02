@@ -1,7 +1,13 @@
+from drf_spectacular.utils import OpenApiExample
+
 from rest_framework import permissions, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import SAFE_METHODS, AllowAny, BasePermission, IsAuthenticated
 
+from config.openapi_examples import HORAIRE as HORAIRE_EXAMPLE
+from config.openapi_examples import PAGINATED_HORAIRES as PAGINATED_HORAIRES_EXAMPLE
+from config.openapi_examples import PAGINATED_PUBLICATIONS as PAGINATED_PUBLICATIONS_EXAMPLE
+from config.openapi_examples import PUBLICATION as PUBLICATION_EXAMPLE
 from config.schema import crud_table
 from post.filters import CategoriePostFilter, HoraireFilter, PublicationFilter
 from post.models import CategoriePost, Horaire, HoraireStatut, Publication, PublicationStatut
@@ -58,11 +64,27 @@ class CategoriePostViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated(), IsRoleAdmin()]
 
 
-@crud_table("Publication")
+@crud_table(
+    "Publication",
+    list_examples=[
+        OpenApiExample(
+            "Liste paginée (author_detail, categorie_detail)",
+            value=PAGINATED_PUBLICATIONS_EXAMPLE,
+            response_only=True,
+        ),
+    ],
+    retrieve_examples=[
+        OpenApiExample(
+            "Détail publication (contenu + nested)",
+            value=PUBLICATION_EXAMPLE,
+            response_only=True,
+        ),
+    ],
+)
 class PublicationViewSet(viewsets.ModelViewSet):
     filterset_class = PublicationFilter
     search_fields = ("titre", "contenu", "author__email", "author__matricule", "categorie__nom")
-    ordering_fields = ("created_at", "updated_at", "titre", "statut")
+    ordering_fields = ("created_at", "updated_at", "titre", "statut", "type_pub")
     permission_classes = [PublicationAccessPermission]
 
     def get_queryset(self):
@@ -118,7 +140,23 @@ class PublicationViewSet(viewsets.ModelViewSet):
         raise PermissionDenied()
 
 
-@crud_table("Horaire")
+@crud_table(
+    "Horaire",
+    list_examples=[
+        OpenApiExample(
+            "Liste paginée (filiere_detail imbriqué)",
+            value=PAGINATED_HORAIRES_EXAMPLE,
+            response_only=True,
+        ),
+    ],
+    retrieve_examples=[
+        OpenApiExample(
+            "Détail horaire",
+            value=HORAIRE_EXAMPLE,
+            response_only=True,
+        ),
+    ],
+)
 class HoraireViewSet(viewsets.ModelViewSet):
     serializer_class = HoraireSerializer
     filterset_class = HoraireFilter

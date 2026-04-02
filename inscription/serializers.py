@@ -12,29 +12,19 @@ class InstitutionSerializer(serializers.ModelSerializer):
 
 
 class DomaineSerializer(serializers.ModelSerializer):
-    institution_nom = serializers.CharField(source="institution.nom", read_only=True)
+    institution_detail = InstitutionSerializer(source="institution", read_only=True)
 
     class Meta:
         model = Domaine
-        fields = ("id", "institution", "institution_nom", "nom", "code")
+        fields = ("id", "institution", "institution_detail", "nom", "code")
 
 
 class FiliereSerializer(serializers.ModelSerializer):
-    domaine_nom = serializers.CharField(source="domaine.nom", read_only=True)
-    institution_id = serializers.IntegerField(source="domaine.institution_id", read_only=True)
-    institution_nom = serializers.CharField(source="domaine.institution.nom", read_only=True)
+    domaine_detail = DomaineSerializer(source="domaine", read_only=True)
 
     class Meta:
         model = Filiere
-        fields = (
-            "id",
-            "domaine",
-            "domaine_nom",
-            "institution_id",
-            "institution_nom",
-            "nom",
-            "code",
-        )
+        fields = ("id", "domaine", "domaine_detail", "nom", "code")
 
 
 class AffectFiliereSerializer(serializers.ModelSerializer):
@@ -52,4 +42,7 @@ class AffectFiliereSerializer(serializers.ModelSerializer):
             "user_detail",
             "filiere_detail",
         )
-        read_only_fields = ("user_detail", "filiere_detail")
+        read_only_fields = (
+            "user_detail",
+            "filiere_detail",
+        )

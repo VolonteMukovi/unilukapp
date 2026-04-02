@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from config.schema import crud_table
 from users.models import User, UserRole
-from users.permissions import IsRoleAdmin
+from users.permissions import AllowAnonymousOrAdminCreate, IsRoleAdmin
 from users.serializers import (
     UserListSerializer,
     UserMeUpdateSerializer,
@@ -54,7 +54,7 @@ class UserViewSet(
         if self.action == "list":
             return [permissions.IsAuthenticated(), IsRoleAdmin()]
         if self.action == "create":
-            return [permissions.IsAuthenticated(), IsRoleAdmin()]
+            return [AllowAnonymousOrAdminCreate()]
         if self.action == "destroy":
             return [permissions.IsAuthenticated(), IsRoleAdmin()]
         if self.action in ("retrieve", "update", "partial_update"):

@@ -1,6 +1,12 @@
 import django_filters
 
-from post.models import CategoriePost, Horaire, Publication, PublicationStatut
+from post.models import (
+    CategoriePost,
+    Horaire,
+    Publication,
+    PublicationStatut,
+    PublicationType,
+)
 
 
 class CategoriePostFilter(django_filters.FilterSet):
@@ -14,6 +20,7 @@ class CategoriePostFilter(django_filters.FilterSet):
 
 class PublicationFilter(django_filters.FilterSet):
     statut = django_filters.ChoiceFilter(choices=PublicationStatut.choices)
+    type_pub = django_filters.ChoiceFilter(choices=PublicationType.choices)
     categorie = django_filters.NumberFilter()
     author = django_filters.NumberFilter()
     created_after = django_filters.IsoDateTimeFilter(field_name="created_at", lookup_expr="gte")
@@ -21,7 +28,7 @@ class PublicationFilter(django_filters.FilterSet):
 
     class Meta:
         model = Publication
-        fields = ("statut", "categorie", "author")
+        fields = ("statut", "type_pub", "categorie", "author")
 
 
 class HoraireFilter(django_filters.FilterSet):

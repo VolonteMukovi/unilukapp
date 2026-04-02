@@ -12,10 +12,14 @@ class CategoriePostAdmin(admin.ModelAdmin):
 
 @admin.register(Publication)
 class PublicationAdmin(admin.ModelAdmin):
-    list_display = ("titre", "categorie", "author", "statut", "created_at")
-    list_filter = ("statut", "categorie")
+    list_display = ("titre", "type_pub", "categorie", "author", "statut", "a_image", "created_at")
+    list_filter = ("statut", "type_pub", "categorie")
     search_fields = ("titre", "contenu")
     autocomplete_fields = ("author", "categorie")
+
+    @admin.display(description="Image", boolean=True)
+    def a_image(self, obj):
+        return bool(obj.image)
 
 
 @admin.register(Horaire)

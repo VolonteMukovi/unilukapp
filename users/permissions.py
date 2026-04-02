@@ -9,6 +9,15 @@ def _role(user):
     return getattr(user, "role", None)
 
 
+class AllowAnonymousOrAdminCreate(permissions.BasePermission):
+    """POST /users/ : inscription publique ou création par un admin (pas un autre rôle connecté)."""
+
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return True
+        return _role(request.user) == UserRole.ADMIN
+
+
 class IsRoleAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return _role(request.user) == UserRole.ADMIN

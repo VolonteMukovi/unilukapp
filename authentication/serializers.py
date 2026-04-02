@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, update_last_login
 from rest_framework_simplejwt.settings import api_settings as jwt_api_settings
@@ -10,14 +11,33 @@ from users.serializers import UserProfileSerializer
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
-    Connexion avec le champ `email` (USERNAME_FIELD) : accepte une adresse e-mail
-    **ou** un numéro de téléphone (toute forme reconnue par libphonenumber).
+    Connexion : fournir `password` et au moins un des champs `email` ou `num_tel`
+    (alias JSON `numTel`). L’e-mail et le téléphone sont tous deux optionnels
+    tant que l’un des deux est renseigné.
     """
 
     default_error_messages = {
         **TokenObtainPairSerializer.default_error_messages,
         "invalid_credentials": "Identifiants incorrects.",
     }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        uname = self.fields[self.username_field]
+        uname.required = False
+        uname.allow_blank = True
+        self.fields["num_tel"] = serializers.CharField(
+            required=False,
+            allow_blank=True,
+            write_only=True,
+        )
+
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            data = {**data}
+            if "numTel" in data and "num_tel" not in data:
+                data["num_tel"] = data["numTel"]
+        return super().to_internal_value(data)
 
     @classmethod
     def get_token(cls, user):
@@ -28,14 +48,21 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         request = self.context.get("request")
-        identifier = (attrs.get(self.username_field) or "").strip()
+        email = (attrs.get(self.username_field) or "").strip()
+        num_tel = (attrs.get("num_tel") or "").strip()
         password = attrs.get("password")
 
-        if not identifier or not password:
-            raise AuthenticationFailed(
-                self.error_messages["invalid_credentials"],
-                code="invalid_credentials",
-            )
+        errors = {}
+        if not password:
+            errors["password"] = ["Ce champ est obligatoire."]
+        if not email and not num_tel:
+            errors["non_field_errors"] = [
+                "Fournissez une adresse e-mail ou un numéro de téléphone."
+            ]
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        identifier = email if email else num_tel
 
         user = None
         if "@" in identifier:

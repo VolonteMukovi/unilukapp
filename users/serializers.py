@@ -1,9 +1,10 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from inscription.models import Filiere
-from users.models import User
+from users.models import User, UserRole
 from users.validators import validate_phone
 
 
@@ -36,12 +37,20 @@ class UserListSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
+    @extend_schema_field(
+        {
+            "type": "string",
+            "format": "uri",
+            "nullable": True,
+            "description": "URL absolue de la photo ; null si aucune image.",
+        }
+    )
     def get_photo_profil(self, obj):
         return absolute_photo_url(obj, self.context.get("request"))
 
 
 class UserWriteSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8, required=False)
+    password = serializers.CharField(write_only=True, min_length=6, required=False)
 
     class Meta:
         model = User
@@ -61,25 +70,100 @@ class UserWriteSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def validate_email(self, value):
-        return value.lower().strip()
+        v = value.lower().strip()
+        qs = User.objects.filter(email__iexact=v)
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("Cette adresse e-mail est déjà utilisée.")
+        return v
 
     def validate_num_tel(self, value):
         try:
-            return validate_phone(value)
+            normalized = validate_phone(value)
         except DjangoValidationError as exc:
             raise serializers.ValidationError(list(exc.messages)) from exc
+        qs = User.objects.filter(num_tel=normalized)
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "Ce numéro de téléphone est déjà utilisé par un autre compte."
+            )
+        return normalized
 
     def validate_matricule(self, value):
+        if value is None:
+            return None
         v = (value or "").strip()
         if not v:
-            raise serializers.ValidationError("Le matricule est obligatoire.")
+            return None
+        qs = User.objects.filter(matricule=v)
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("Ce matricule est déjà utilisé.")
         return v
 
+    def validate(self, attrs):
+        request = self.context.get("request")
+        if request and not request.user.is_authenticated:
+            if not attrs.get("password"):
+                raise serializers.ValidationError(
+                    {"password": "Ce champ est obligatoire pour l'inscription."}
+                )
+            allowed_roles = {
+                UserRole.ETUDIANT,
+                UserRole.ADMIN,
+                UserRole.SECRETAIRE,
+            }
+            role = attrs.get("role", UserRole.ETUDIANT)
+            if role not in allowed_roles:
+                role = UserRole.ETUDIANT
+                attrs["role"] = role
+            if role == UserRole.ETUDIANT and not attrs.get("matricule"):
+                raise serializers.ValidationError(
+                    {
+                        "matricule": "Le matricule est obligatoire pour les comptes étudiants."
+                    }
+                )
+            return attrs
+
+        inst = self.instance
+        role = attrs.get("role", inst.role if inst else UserRole.ETUDIANT)
+        if inst is None:
+            role = attrs.get("role", UserRole.ETUDIANT)
+
+        if "matricule" in attrs:
+            mat = attrs["matricule"]
+        else:
+            mat = inst.matricule if inst else None
+
+        if role == UserRole.ETUDIANT and not mat:
+            raise serializers.ValidationError(
+                {"matricule": "Le matricule est obligatoire pour les comptes étudiants."}
+            )
+        return attrs
+
     def create(self, validated_data):
+        request = self.context.get("request")
+        if request and not request.user.is_authenticated:
+            validated_data.pop("is_active", None)
+            validated_data["is_active"] = True
+        elif request and getattr(request.user, "role", None) != UserRole.ADMIN:
+            validated_data.pop("role", None)
+            validated_data.pop("is_active", None)
+            validated_data["role"] = UserRole.ETUDIANT
+            validated_data["is_active"] = True
         password = validated_data.pop("password", None)
         user = User(**validated_data)
         if password:
-            validate_password(password, user)
+            try:
+                validate_password(password, user)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError(
+                    {"password": list(exc.messages)}
+                ) from exc
             user.set_password(password)
         else:
             user.set_unusable_password()
@@ -91,7 +175,12 @@ class UserWriteSerializer(serializers.ModelSerializer):
         for attr, val in validated_data.items():
             setattr(instance, attr, val)
         if password:
-            validate_password(password, instance)
+            try:
+                validate_password(password, instance)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError(
+                    {"password": list(exc.messages)}
+                ) from exc
             instance.set_password(password)
         instance.save()
         return instance
@@ -145,6 +234,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
+    @extend_schema_field(
+        {
+            "type": "string",
+            "format": "uri",
+            "nullable": True,
+            "description": "URL absolue de la photo ; null si aucune image.",
+        }
+    )
     def get_photo_profil(self, obj):
         return absolute_photo_url(obj, self.context.get("request"))
 

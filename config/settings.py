@@ -8,7 +8,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from config.schema import TAG_DESCRIPTIONS, TAG_ORDER
+from config.schema import OPENAPI_INTRO, TAG_DESCRIPTIONS, TAG_ORDER
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -118,7 +118,10 @@ DATABASES = {"default": _default_db}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 6},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -185,7 +188,8 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "API académique",
     "DESCRIPTION": (
         "Documentation groupée **par table** (opérations CRUD). "
-        "Base URL des ressources : `/api/`."
+        "Base URL des ressources : `/api/`.\n\n"
+        + OPENAPI_INTRO.strip()
     ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
